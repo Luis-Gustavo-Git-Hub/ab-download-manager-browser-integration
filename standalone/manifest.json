@@ -17,7 +17,9 @@
   "minimum_chrome_version": "120",
   "optional_host_permissions": [
     "https://*/*",
-    "http://*/*"
+    "http://*/*",
+    "https://downloads.sourceforge.net/*",
+    "https://*.dl.sourceforge.net/*"
   ],
   "action": {
     "default_title": "Downloads Independentes"
