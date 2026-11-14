@@ -119,7 +119,7 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
   serial(() => command(message)).then(tasks => reply({ tasks }), error => reply({ error: error.message || 'Não foi possível concluir.' }));
   return true;
 });
-chrome.action.onClicked.addListener(() => chrome.tabs.create({ url: chrome.runtime.getURL('parallel.html') }));
+chrome.action.onClicked.addListener(tab => { if (tab.id != null) chrome.sidePanel.open({tabId:tab.id}); });
 chrome.downloads.onChanged.addListener(() => serial(refresh).catch(() => {}));
 chrome.downloads.onErased.addListener(() => serial(refresh).catch(() => {}));
 chrome.alarms.onAlarm.addListener(alarm => { if (alarm.name === 'recover') serial(refresh).catch(() => {}); });
