@@ -24,7 +24,9 @@ $('inspect').onclick=async()=>{
     const url=new URL($('url').value.trim());
     if(!['https:','http:'].includes(url.protocol)||url.username||url.password)throw new Error('Link inválido.');
     if(url.hostname==='sourceforge.net'&&/^\/projects\/[^/]+\/?$/.test(url.pathname))throw new Error('Esse link abre a página do projeto, não o arquivo. No SourceForge, abra Arquivos, escolha o arquivo e copie o link de download.');
-    if(!await chrome.permissions.request({origins:[url.protocol+'//'+url.hostname+'/*']}))throw new Error('Permissão do site recusada.');
+    const origins=[url.origin+'/*'];
+    if(url.hostname==='sourceforge.net'||url.hostname.endsWith('.sourceforge.net'))origins.push('https://downloads.sourceforge.net/*','https://*.dl.sourceforge.net/*');
+    if(!await chrome.permissions.request({origins}))throw new Error('Permissão do site recusada.');
     await locked(async()=>{
       if((await chrome.storage.local.get(storageKey))[storageKey])throw new Error('Há um download existente. Reabra esta página.');
       engine=new ParallelEngine();const meta=await engine.inspect(url.href);
