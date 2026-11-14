@@ -12,7 +12,7 @@ Verificações executadas: sintaxe dos dois scripts; simulação das APIs para c
 
 ## Motor paralelo experimental
 
-Abra o link do modo paralelo. Requer Chrome 120+, OPFS, Web Locks e seletor de arquivo. Verifique um link público, permita o acesso à origem e inicie. Mantém quatro conexões, partes de 8 MiB, timeout de inatividade de 30 segundos, tamanho e ETag forte verificados. Não segue redirecionamentos nem envia credenciais. O modo padrão atende destinos incompatíveis.
+Abra o link do modo paralelo. Requer Chrome 120+, OPFS, Web Locks e seletor de arquivo. Verifique um link público, permita o acesso à origem e inicie. Mantém quatro conexões, partes de 8 MiB, até três tentativas para falhas transitórias de partes, timeout de inatividade de 30 segundos, tamanho e ETag forte verificados. Não segue redirecionamentos nem envia credenciais. O modo padrão atende destinos incompatíveis.
 
 A aba do paralelo precisa ficar aberta. Fechá-la interrompe as conexões; ao reabrir, partes completas podem ser revalidadas e reutilizadas. Partes incompletas são baixadas novamente. O arquivo final só é confirmado após fechar o fluxo de gravação. Depois de salvar, use Descartar partes locais para liberar o espaço temporário. Existe apenas um trabalho paralelo local de cada vez, com bloqueio entre abas.
 

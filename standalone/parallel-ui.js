@@ -31,6 +31,7 @@ $('inspect').onclick=async()=>{
 };
 $('start').onclick=()=>locked(async()=>{
   job=(await chrome.storage.local.get(storageKey))[storageKey];if(!job)throw new Error('Verifique um link primeiro.');
+  const allowed=await chrome.permissions.contains({origins:[new URL(job.url).origin+'/*']});if(!allowed)throw new Error('Permissão do site revogada. Verifique o link novamente.');
   directory=await folder();engine=new ParallelEngine();show('Baixando partes…');
   for(const part of job.parts.filter(p=>p.done)){try{const f=await disk.read(part);if(f.size!==part.end-part.start+1)part.done=false;}catch{part.done=false;}}
   await checkpoint(job);await engine.run(job,disk,render);show('Partes recebidas. Escolha Salvar arquivo completo.');

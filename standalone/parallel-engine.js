@@ -38,16 +38,35 @@ class ParallelEngine {
       while(cursor<job.parts.length){
         const part=job.parts[cursor++];if(part.done)continue;
         if(this.controller.signal.aborted)throw new Error('Pausado.');
-        const req=await this.response(job.url,{Range:`bytes=${part.start}-${part.end}`,'If-Range':job.etag});
-        let writer,reader;
-        try {
-          this.validate(req.response,part.start,part.end,job.size,job.etag);
-          writer=await disk.open(part);reader=req.response.body.getReader();let bytes=0;
-          while(true){const chunk=await reader.read();if(chunk.done)break;req.touch();bytes+=chunk.value.byteLength;if(bytes>part.end-part.start+1)throw new Error('Parte excedeu o intervalo.');await writer.write(chunk.value);}
-          if(bytes!==part.end-part.start+1)throw new Error('Parte truncada.');
-          await writer.close();writer=null;
-          part.done=true;await disk.checkpoint(job);progress(job);
-        } finally { await reader?.cancel().catch(()=>{});await writer?.abort().catch(()=>{});await req.response.body?.cancel().catch(()=>{});req.dispose(); }
+        let committed=false,lastError;
+        for(let attempt=0;attempt<3&&!committed;attempt++){
+          let req,writer,reader;
+          try {
+            req=await this.response(job.url,{Range:`bytes=${part.start}-${part.end}`,'If-Range':job.etag});
+            const status=req.response.status;
+            if(status===429||status>=500){
+              const retryAfter=Number(req.response.headers.get('Retry-After'));
+              const delay=Number.isFinite(retryAfter)&&retryAfter>0?Math.min(retryAfter*1000,30000):Math.min(1000*2**attempt,8000);
+              if(attempt===2)throw new Error('Servidor temporariamente indisponível após três tentativas.');
+              await req.response.body?.cancel();req.dispose();req=null;
+              await new Promise((resolve,reject)=>{const timer=setTimeout(resolve,delay);this.controller.signal.addEventListener('abort',()=>{clearTimeout(timer);reject(new Error('Pausado.'));},{once:true});});
+              continue;
+            }
+            this.validate(req.response,part.start,part.end,job.size,job.etag);
+            writer=await disk.open(part);reader=req.response.body.getReader();let bytes=0;
+            while(true){const chunk=await reader.read();if(chunk.done)break;req.touch();bytes+=chunk.value.byteLength;if(bytes>part.end-part.start+1)throw new Error('Parte excedeu o intervalo.');await writer.write(chunk.value);}
+            if(bytes!==part.end-part.start+1)throw new Error('Parte truncada.');
+            await writer.close();writer=null;
+            part.done=true;await disk.checkpoint(job);progress(job);committed=true;
+          } catch(error) {
+            lastError=error;
+            if(this.controller.signal.aborted||error.message==='Servidor incompatível ou arquivo alterado. Use o modo padrão.'||error.message==='Arquivo alterado. Descarte as partes e comece novamente.')throw error;
+            const transient=(error instanceof TypeError||error?.name==='TypeError')||/truncada|temporariamente indisponível|Failed to fetch|NetworkError/i.test(error.message);
+            if(!transient||attempt===2)throw error;
+            await new Promise((resolve,reject)=>{const timer=setTimeout(resolve,Math.min(1000*2**attempt,8000));this.controller.signal.addEventListener('abort',()=>{clearTimeout(timer);reject(new Error('Pausado.'));},{once:true});});
+          } finally {await reader?.cancel().catch(()=>{});await writer?.abort().catch(()=>{});if(req){await req.response.body?.cancel().catch(()=>{});req.dispose();}}
+        }
+        if(!committed)throw lastError||new Error('Não foi possível baixar a parte.');
       }
     };
     const outcomes=await Promise.allSettled(Array.from({length:Math.min(4,job.parts.length)},()=>worker().catch(error=>{this.stop();throw error;})));
