@@ -22,7 +22,10 @@ class ParallelEngine {
     try {
       const r=request.response, range=/^bytes 0-0\/(\d+)$/.exec(r.headers.get('Content-Range') || '');
       const size=Number(range?.[1]), etag=r.headers.get('ETag');
-      if (!Number.isSafeInteger(size) || size <= 0) throw new Error('Tamanho não verificável. Use o modo padrão.');
+      if (!Number.isSafeInteger(size) || size <= 0) {
+        if (r.headers.get('Content-Type')?.includes('text/html')) throw new Error('O link abriu uma página, não um arquivo. No SourceForge, escolha o arquivo e copie o link de download.');
+        throw new Error('O servidor não informou tamanho e intervalo verificáveis. Use o modo padrão.');
+      }
       this.validate(r,0,0,size,etag);
       const reader=r.body.getReader();let received=0;
       try { while(true){const chunk=await reader.read();if(chunk.done)break;request.touch();received+=chunk.value.byteLength;if(received>1)throw new Error('Resposta de intervalo inválida.');} } finally {await reader.cancel();}
