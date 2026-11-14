@@ -7,6 +7,7 @@
     "alarms",
     "contextMenus",
     "downloads",
+    "offscreen",
     "storage"
   ],
   "background": {
