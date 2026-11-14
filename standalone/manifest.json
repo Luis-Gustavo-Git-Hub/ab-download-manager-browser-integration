@@ -13,8 +13,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Downloads",
-    "default_popup": "manager.html"
+    "default_title": "Downloads Independentes"
   },
   "options_page": "manager.html",
   "minimum_chrome_version": "120",
