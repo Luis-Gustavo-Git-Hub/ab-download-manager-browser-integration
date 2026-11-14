@@ -2,7 +2,7 @@
 
 Carregue **esta pasta** em chrome://extensions → Modo do desenvolvedor → Carregar sem compactação. Não é necessário npm ou aplicativo auxiliar. Não instale simultaneamente com a integração original para evitar interferências de captura.
 
-O ícone abre o gerenciador no painel lateral, sem nova aba. Cole o link e toque em Baixar. Permita o acesso ao site quando solicitado. O painel mostra o progresso e oferece pausa e retomada. Ao finalizar, toque em Salvar arquivo. Se o site não permitir partes, use o link Modo padrão.
+O ícone abre o gerenciador no painel lateral, sem nova aba. Cole o link e toque em Baixar. Permita o acesso a sites HTTP/HTTPS quando solicitado. O painel mostra o progresso e oferece pausa e retomada. Ao finalizar, toque em Salvar arquivo. Se o site não permitir partes, use o link Modo padrão.
 
 Esta prévia implementa o modo nativo da etapa 1 do PRD. Inclui motor paralelo experimental com quatro conexões, partes em OPFS e montagem por streaming. Não implementa hash de referência nem toda a homologação de recuperação. Não é uma versão final do PRD. O código upstream em src/ continua disponível como referência; este manifesto não carrega aquele código nem se conecta ao aplicativo.
 
