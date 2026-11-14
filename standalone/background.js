@@ -119,6 +119,7 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
   serial(() => command(message)).then(tasks => reply({ tasks }), error => reply({ error: error.message || 'Não foi possível concluir.' }));
   return true;
 });
+chrome.action.onClicked.addListener(() => chrome.tabs.create({ url: chrome.runtime.getURL('parallel.html') }));
 chrome.downloads.onChanged.addListener(() => serial(refresh).catch(() => {}));
 chrome.downloads.onErased.addListener(() => serial(refresh).catch(() => {}));
 chrome.alarms.onAlarm.addListener(alarm => { if (alarm.name === 'recover') serial(refresh).catch(() => {}); });
@@ -129,5 +130,8 @@ chrome.runtime.onInstalled.addListener(() => {
   serial(refresh).catch(() => {});
 });
 chrome.contextMenus.onClicked.addListener(info => {
-  if (info.menuItemId === 'independent-download' && info.linkUrl) serial(() => command({ action: 'add', url: info.linkUrl })).catch(() => chrome.runtime.openOptionsPage());
+  if (info.menuItemId === 'independent-download' && info.linkUrl) {
+    const target = chrome.runtime.getURL('parallel.html') + '?url=' + encodeURIComponent(info.linkUrl);
+    chrome.tabs.create({url: target});
+  }
 });
