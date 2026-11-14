@@ -1,5 +1,5 @@
 const JOB_KEY='parallel-job-v1', STATUS_KEY='parallel-status-v1';
-let worker, creating=false;
+let worker;
 const saveStatus=status=>chrome.storage.local.set({[STATUS_KEY]:{...status,updated:Date.now()}});
 function ensureWorker(){if(!worker){worker=new Worker('parallel-worker.js');worker.onmessage=onWorkerMessage;worker.onerror=()=>saveStatus({state:'error',message:'A transferência em segundo plano foi interrompida. Reabra o popup para retomar as partes concluídas.'});worker.onmessageerror=()=>saveStatus({state:'error',message:'Falha ao receber o progresso. Reabra o popup para retomar.'});}return worker;}
 async function onWorkerMessage(event){
