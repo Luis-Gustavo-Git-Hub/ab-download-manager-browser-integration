@@ -16,10 +16,7 @@
   "options_page": "manager.html",
   "minimum_chrome_version": "120",
   "optional_host_permissions": [
-    "https://*/*",
-    "http://*/*",
-    "https://downloads.sourceforge.net/*",
-    "https://*.dl.sourceforge.net/*"
+    "*://*/*"
   ],
   "action": {
     "default_title": "Downloads Independentes"
