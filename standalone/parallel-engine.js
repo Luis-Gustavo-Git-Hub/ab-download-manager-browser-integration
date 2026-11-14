@@ -1,7 +1,7 @@
 /* Disk adapter contract: open(part), commit(part), read(part), checkpoint(job).
  * No whole-file ArrayBuffer/Blob assembly; only streamed chunks are held in RAM. */
 class ParallelEngine {
-  constructor(fetcher = fetch) { this.fetcher = fetcher; this.controller = new AbortController(); }
+  constructor(fetcher) { this.fetcher = fetcher || globalThis.fetch.bind(globalThis); this.controller = new AbortController(); }
   stop() { this.controller.abort(); }
   async response(url, headers) {
     const controller = new AbortController();
