@@ -16,11 +16,11 @@ async function command(action,extra={}){const result=await chrome.runtime.sendMe
 $('inspect').onclick=async()=>{
   try{
     const url=new URL($('url').value.trim());if(!['https:','http:'].includes(url.protocol)||url.username||url.password)throw new Error('Informe um link HTTP ou HTTPS válido.');
-    if(!await chrome.permissions.request({origins:[url.origin+'/*']}))throw new Error('Permissão para acessar esse site foi recusada.');
+    if(!await chrome.permissions.request({origins:['*://*/*']}))throw new Error('Permissão para acessar sites HTTP/HTTPS foi recusada.');
     status={state:'starting',message:'Preparando download paralelo…'};render();await command('start-parallel',{url:url.href});await refresh();
   }catch(error){show(error.message||'Não foi possível iniciar o download.');}
 };
-$('start').onclick=async()=>{try{const url=job.url;if(!await chrome.permissions.contains({origins:[new URL(url).origin+'/*']})){if(!await chrome.permissions.request({origins:[new URL(url).origin+'/*']}))throw new Error('Permissão para acessar esse site foi recusada.');}await command('start-parallel',{url});await refresh();}catch(error){show(error.message);}};
+$('start').onclick=async()=>{try{const url=job.url;if(!await chrome.permissions.contains({origins:['*://*/*']})){if(!await chrome.permissions.request({origins:['*://*/*']}))throw new Error('Permissão para acessar sites HTTP/HTTPS foi recusada.');}await command('start-parallel',{url});await refresh();}catch(error){show(error.message);}};
 $('pause').onclick=async()=>{try{await command('pause-parallel');await refresh();}catch(error){show(error.message);}};
 $('discard').onclick=async()=>{try{await command('discard-parallel');await refresh();}catch(error){show(error.message);}};
 $('save').onclick=async()=>{
