@@ -116,13 +116,37 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
   const base = chrome.runtime.getURL('');
   if (sender.id !== chrome.runtime.id || !sender.url?.startsWith(base) || sender.tab && !sender.tab.url?.startsWith(base)) return;
   if (!message || typeof message.action !== 'string') return;
+  if (message.target === 'parallel-offscreen') return;
+  if (message.action === 'start-parallel' || message.action === 'pause-parallel' || message.action === 'discard-parallel') {
+    (async () => {
+      if (!(await chrome.runtime.getContexts({contextTypes:['OFFSCREEN_DOCUMENT'], documentUrls:[chrome.runtime.getURL('offscreen.html')]})).length) {
+        await chrome.offscreen.createDocument({url:'offscreen.html', reasons:['WORKERS'], justification:'Manter um worker de transferência ativo quando o popup da extensão for fechado.'});
+      }
+      await chrome.runtime.sendMessage({target:'parallel-offscreen', action:message.action, url:message.url});
+      reply({ok:true});
+    })().catch(error => reply({error:error.message || 'Não foi possível iniciar a transferência em segundo plano.'}));
+    return true;
+  }
+  if (message.action === 'parallel-native-fallback') {
+    const url = validUrl(message.url);
+    chrome.downloads.download({url, conflictAction:'uniquify', saveAs:false}).then(id => reply({ok:true,id}), error => reply({error:error.message || 'Não foi possível iniciar o download padrão.'}));
+    return true;
+  }
   serial(() => command(message)).then(tasks => reply({ tasks }), error => reply({ error: error.message || 'Não foi possível concluir.' }));
   return true;
 });
 chrome.downloads.onChanged.addListener(() => serial(refresh).catch(() => {}));
 chrome.downloads.onErased.addListener(() => serial(refresh).catch(() => {}));
 chrome.alarms.onAlarm.addListener(alarm => { if (alarm.name === 'recover') serial(refresh).catch(() => {}); });
-chrome.runtime.onStartup.addListener(() => serial(refresh).catch(() => {}));
+chrome.runtime.onStartup.addListener(() => {
+  chrome.storage.local.get('parallel-status-v1').then(result => {
+    const status = result['parallel-status-v1'];
+    if (status && ['starting','downloading'].includes(status.state)) {
+      return chrome.storage.local.set({'parallel-status-v1':{...status,state:'interrupted',message:'O navegador reiniciou. Reabra o popup e toque em Retomar para revalidar as partes concluídas.'}});
+    }
+  }).catch(() => {});
+  serial(refresh).catch(() => {});
+});
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.removeAll(() => chrome.contextMenus.create({ id: 'independent-download', title: 'Baixar com Downloads Independentes', contexts: ['link'], targetUrlPatterns: ['http://*/*', 'https://*/*'] }));
   chrome.alarms.create('recover', { periodInMinutes: 1 });
