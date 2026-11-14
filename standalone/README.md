@@ -2,7 +2,7 @@
 
 Carregue **esta pasta** em chrome://extensions → Modo do desenvolvedor → Carregar sem compactação. Não é necessário npm ou aplicativo auxiliar. Não instale simultaneamente com a integração original para evitar interferências de captura.
 
-O botão da extensão abre a lista; “Abrir em aba” mantém o gerenciador aberto. Cole links HTTP/HTTPS ou use o menu de contexto sobre um link. Os arquivos são gravados pelo navegador no destino configurado. Há dois downloads ativos; pausar libera uma vaga. Retomada depende de canResume do navegador. Reiniciar pode baixar novamente desde o início. Limpar histórico mantém os arquivos salvos.
+A ação do ícone abre diretamente o gerenciador paralelo em uma aba completa. O modo alternativo do navegador está no link abaixo do campo. Há dois downloads nativos ativos; pausar libera uma vaga.
 
 Esta prévia implementa o modo nativo da etapa 1 do PRD. Inclui motor paralelo experimental com quatro conexões, partes em OPFS e montagem por streaming. Não implementa hash de referência nem toda a homologação de recuperação. Não é uma versão final do PRD. O código upstream em src/ continua disponível como referência; este manifesto não carrega aquele código nem se conecta ao aplicativo.
 
