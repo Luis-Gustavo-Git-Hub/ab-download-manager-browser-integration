@@ -13,8 +13,8 @@ const disk={
 };
 function render(){if(!job)return;$('url').value=job.url;$('progress').max=job.size;$('progress').value=job.parts.filter(p=>p.done).reduce((n,p)=>n+p.end-p.start+1,0);$('start').disabled=working;$('save').disabled=working||!job.parts.every(p=>p.done);$('inspect').disabled=working||!!job;$('start').hidden=!job;$('pause').hidden=!working;$('discard').hidden=!job;}
 async function locked(fn){if(working)return;working=true;render();try{await navigator.locks.request('parallel-v1',{ifAvailable:true},async lock=>{if(!lock)throw new Error('Já existe outra aba trabalhando neste download.');await fn();});}catch(e){
-  if(!job&&e?.name==='TypeError'&&/Failed to fetch|NetworkError/i.test(e.message||'')){
-    try{const url=new URL($('url').value.trim());await chrome.downloads.download({url:url.href,conflictAction:'uniquify',saveAs:false});show('Este servidor não permite o modo paralelo. O Chrome iniciou o download padrão, sem aceleração por partes.');}
+  if(!job&&(e?.name==='TypeError'&&/Failed to fetch|NetworkError/i.test(e.message||'')||/O servidor não informou|O link abriu uma página|Servidor incompatível|Tamanho não verificável|Resposta de intervalo inválida/i.test(e.message||''))){
+    try{const url=new URL($('url').value.trim());await chrome.downloads.download({url:url.href,conflictAction:'uniquify',saveAs:false});show('Este site não permite o modo paralelo. O Chrome iniciou o download padrão, sem aceleração por partes.');}
     catch(fallbackError){show(fallbackError.message||e.message);}
   }else show(e.message||'Não foi possível concluir.');
 }finally{working=false;render();}}
@@ -24,9 +24,7 @@ $('inspect').onclick=async()=>{
     const url=new URL($('url').value.trim());
     if(!['https:','http:'].includes(url.protocol)||url.username||url.password)throw new Error('Link inválido.');
     if(url.hostname==='sourceforge.net'&&/^\/projects\/[^/]+\/?$/.test(url.pathname))throw new Error('Esse link abre a página do projeto, não o arquivo. No SourceForge, abra Arquivos, escolha o arquivo e copie o link de download.');
-    const origins=[url.origin+'/*'];
-    if(url.hostname==='sourceforge.net'||url.hostname.endsWith('.sourceforge.net'))origins.push('https://downloads.sourceforge.net/*','https://*.dl.sourceforge.net/*');
-    if(!await chrome.permissions.request({origins}))throw new Error('Permissão do site recusada.');
+    if(!await chrome.permissions.request({origins:['*://*/*']}))throw new Error('Permissão para acessar sites foi recusada.');
     await locked(async()=>{
       if((await chrome.storage.local.get(storageKey))[storageKey])throw new Error('Há um download existente. Reabra esta página.');
       engine=new ParallelEngine();const meta=await engine.inspect(url.href);
