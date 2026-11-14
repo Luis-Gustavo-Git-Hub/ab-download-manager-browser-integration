@@ -1,6 +1,7 @@
 const $=id=>document.getElementById(id);
 let job, engine, working=false, directory;
 const storageKey='parallel-job-v1';
+const requestedUrl=new URL(location.href).searchParams.get('url');if(requestedUrl)$('url').value=requestedUrl;
 function show(text){$('status').textContent=text;}
 let writes=Promise.resolve();
 function checkpoint(value){const snapshot=structuredClone(value);writes=writes.then(()=>chrome.storage.local.set({[storageKey]:snapshot}));return writes;}
