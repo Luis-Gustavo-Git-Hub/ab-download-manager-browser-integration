@@ -23,6 +23,7 @@ $('inspect').onclick=async()=>{
   try{
     const url=new URL($('url').value.trim());
     if(!['https:','http:'].includes(url.protocol)||url.username||url.password)throw new Error('Link inválido.');
+    if(url.hostname==='sourceforge.net'&&/^\/projects\/[^/]+\/?$/.test(url.pathname))throw new Error('Esse link abre a página do projeto, não o arquivo. No SourceForge, abra Arquivos, escolha o arquivo e copie o link de download.');
     if(!await chrome.permissions.request({origins:[url.protocol+'//'+url.hostname+'/*']}))throw new Error('Permissão do site recusada.');
     await locked(async()=>{
       if((await chrome.storage.local.get(storageKey))[storageKey])throw new Error('Há um download existente. Reabra esta página.');
@@ -38,6 +39,7 @@ $('inspect').onclick=async()=>{
       try {
         const url=new URL($('url').value.trim());
         if(!['https:','http:'].includes(url.protocol)||url.username||url.password)throw new Error('Link inválido.');
+    if(url.hostname==='sourceforge.net'&&/^\/projects\/[^/]+\/?$/.test(url.pathname))throw new Error('Esse link abre a página do projeto, não o arquivo. No SourceForge, abra Arquivos, escolha o arquivo e copie o link de download.');
         await chrome.downloads.download({url:url.href,conflictAction:'uniquify',saveAs:false});
         show('Este servidor não permitiu iniciar o modo paralelo. O Chrome começou o download padrão, sem aceleração por partes.');
       } catch(fallbackError) { show(fallbackError.message||e.message); }
