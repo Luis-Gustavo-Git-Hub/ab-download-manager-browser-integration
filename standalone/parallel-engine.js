@@ -10,7 +10,7 @@ class ParallelEngine {
     if (this.controller.signal.aborted) abort();
     let timer = setTimeout(abort, 30000);
     try {
-      const response = await this.fetcher(url, {headers, signal:controller.signal, credentials:'omit', redirect:'error', cache:'no-store'});
+      const response = await this.fetcher(url, {headers, signal:controller.signal, credentials:'omit', redirect:'follow', cache:'no-store'});
       return {response, touch(){clearTimeout(timer);timer=setTimeout(abort,30000);}, dispose:()=>{clearTimeout(timer);this.controller.signal.removeEventListener('abort',abort);}};
     } catch(error) { clearTimeout(timer); this.controller.signal.removeEventListener('abort',abort); throw error; }
   }
@@ -30,7 +30,9 @@ class ParallelEngine {
       const reader=r.body.getReader();let received=0;
       try { while(true){const chunk=await reader.read();if(chunk.done)break;request.touch();received+=chunk.value.byteLength;if(received>1)throw new Error('Resposta de intervalo inválida.');} } finally {await reader.cancel();}
       if(received!==1)throw new Error('Resposta truncada.');
-      return {url,size,etag};
+      const finalUrl=new URL(r.url||url);
+      if(!['http:','https:'].includes(finalUrl.protocol)||finalUrl.username||finalUrl.password)throw new Error('Destino redirecionado inválido.');
+      return {url:finalUrl.href,size,etag};
     } finally { await request.response.body?.cancel().catch(()=>{}); request.dispose(); }
   }
   async run(job, disk, progress=()=>{}) {
