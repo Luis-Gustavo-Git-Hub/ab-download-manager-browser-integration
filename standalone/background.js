@@ -3,6 +3,7 @@ const KEY = 'independent-v1';
 const MAX_ACTIVE = 2;
 const terminal = new Set(['complete', 'cancelled', 'failed']);
 let chain = Promise.resolve();
+let creatingOffscreen;
 function serial(fn) {
   const next = chain.then(fn);
   chain = next.catch(() => {});
@@ -21,6 +22,13 @@ function validUrl(value) {
     throw new Error('Informe um link HTTP ou HTTPS sem credenciais no endereço.');
   }
   return url.href;
+}
+async function ensureParallelDocument() {
+  const url=chrome.runtime.getURL('offscreen.html');
+  const contexts=await chrome.runtime.getContexts({contextTypes:['OFFSCREEN_DOCUMENT'],documentUrls:[url]});
+  if(contexts.length)return;
+  if(!creatingOffscreen)creatingOffscreen=chrome.offscreen.createDocument({url:'offscreen.html',reasons:['WORKERS'],justification:'Manter um worker de transferência ativo quando o popup da extensão for fechado.'}).finally(()=>{creatingOffscreen=null;});
+  await creatingOffscreen;
 }
 function apply(task, item) {
   task.bytes = item.bytesReceived;
@@ -119,9 +127,7 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
   if (message.target === 'parallel-offscreen') return;
   if (message.action === 'start-parallel' || message.action === 'pause-parallel' || message.action === 'discard-parallel') {
     (async () => {
-      if (!(await chrome.runtime.getContexts({contextTypes:['OFFSCREEN_DOCUMENT'], documentUrls:[chrome.runtime.getURL('offscreen.html')]})).length) {
-        await chrome.offscreen.createDocument({url:'offscreen.html', reasons:['WORKERS'], justification:'Manter um worker de transferência ativo quando o popup da extensão for fechado.'});
-      }
+      await ensureParallelDocument();
       await chrome.runtime.sendMessage({target:'parallel-offscreen', action:message.action, url:message.url});
       reply({ok:true});
     })().catch(error => reply({error:error.message || 'Não foi possível iniciar a transferência em segundo plano.'}));
