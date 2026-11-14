@@ -3,8 +3,23 @@
   "name": "Downloads Independentes",
   "version": "0.1.0",
   "description": "Gerencie downloads HTTP e HTTPS no navegador, sem aplicativo auxiliar.",
-  "permissions": ["downloads", "storage", "contextMenus", "alarms"],
-  "background": {"service_worker": "background.js"},
-  "action": {"default_title": "Downloads", "default_popup": "manager.html"},
-  "options_page": "manager.html"
+  "permissions": [
+    "downloads",
+    "storage",
+    "contextMenus",
+    "alarms"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Downloads",
+    "default_popup": "manager.html"
+  },
+  "options_page": "manager.html",
+  "minimum_chrome_version": "120",
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://*/*"
+  ]
 }
